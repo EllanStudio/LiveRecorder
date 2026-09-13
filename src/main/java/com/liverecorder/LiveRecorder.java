@@ -21,6 +21,7 @@ public class LiveRecorder extends JavaPlugin {
     private DatabaseManager databaseManager;
     private LiveCore liveCore;
     private CameraGeometry cameraGeometry;
+    private com.liverecorder.network.BackendNetwork network;
 
     @Override
     public void onEnable() {
@@ -34,6 +35,17 @@ public class LiveRecorder extends JavaPlugin {
 
         // 保存默认配置
         saveDefaultConfig();
+        if (getConfig().getBoolean("network.enabled", false)) {
+            cameraGeometry = new CameraGeometry(this);
+            try {
+                network = new com.liverecorder.network.BackendNetwork(this);
+                network.start();
+            } catch (Exception e) {
+                getLogger().log(java.util.logging.Level.SEVERE, "Network mode failed to start", e);
+                getServer().getPluginManager().disablePlugin(this);
+            }
+            return;
+        }
         
         // 验证配置
         if (!validateConfig()) {
@@ -91,6 +103,7 @@ public class LiveRecorder extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (network != null) network.close();
         getLogger().info("正在关闭 LiveRecorder...");
 
         if (liveCore != null) {

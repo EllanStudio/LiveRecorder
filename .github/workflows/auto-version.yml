@@ -19,6 +19,7 @@ on:
 
 jobs:
   version-bump:
+    if: github.repository == 'httye/LiveRecorder'
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -92,3 +92,17 @@ privacy:
     enabled: true
     # 请求超时时间（秒）
     timeout: 60
+# Ellan Velocity network mode. All backends must use the same secret and camera UUIDs.
+# Enabling/disabling network mode requires a restart. See NETWORK.md.
+network:
+  enabled: false
+  secret: "CHANGE-ME-copy-secret-from-Velocity-network.properties"
+  recorder-uuids: []
+  # Wait for AuthMe/InvSync and world loading before announcing readiness.
+  join-delay-ticks: 100
+  # A private, enclosed holding room. Configure separately on each backend.
+  waiting-world: "world"
+  waiting-x: 0.5
+  waiting-y: 100.0
+  waiting-z: 0.5
+  hide-chat: true

@@ -13,6 +13,7 @@ jobs:
   # 编译任务
   # ============================================
   build:
+    if: github.repository == 'httye/LiveRecorder'
     runs-on: ubuntu-latest
     name: Build (Java ${{ matrix.java-version }})
 

@@ -1,0 +1,29 @@
+name: Network Build and Tests
+on:
+  push:
+    branches: [main, master, ellan-network]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Test and build backend
+        run: mvn -B clean verify
+      - name: Test and build coordinator
+        run: mvn -B -f velocity/pom.xml clean verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LiveRecorder-Network
+          path: |
+            target/LiveRecorder-*.jar
+            velocity/target/LiveRecorder-Velocity-*.jar
+            NETWORK.md

@@ -4,6 +4,7 @@ main: com.liverecorder.LiveRecorder
 api-version: 1.16
 description: 无人机式自由录制者管理系统 - 面向直播/录屏场景
 author: 七月个人制作组
+softdepend: [AuthMe]
 
 commands:
   liverecorder:
