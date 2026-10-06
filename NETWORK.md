@@ -30,9 +30,9 @@ AuthMe、InvSync、CarbonChat 组合下进行客户端端到端验收。不要�
 不要把两个 JAR 都放进同一服务器。后端 JAR 替换旧 LiveRecorder，不要并存。
 后端默认仍是原版单服模式，必须显式打开 network.enabled。
 
-代理以 Velocity 3.4 API / Java 17 编译，后端以 Bukkit 1.16.5 API / Java 8 编译。
+代理以 Velocity 3.4 API / Java 17 编译；后端以 Paper API `26.3.build.157-beta` 编译，但仍保持 Bukkit `api-version: 1.16` 与 Java 8 source/target，以保留既有兼容设计。
 实际运行时需满足你所用 Velocity、Paper/Leaf 的 Java 要求。
-本分支未验证 Folia，也不保证上游全部旧版本兼容。编译通过不等于完成 26.2 实机验收。
+本分支未验证 Folia，也不保证上游全部旧版本兼容。编译通过不等于完成 Paper 26.3 实机验收。
 
 ## 配置步骤
 
