@@ -13,13 +13,16 @@ jobs:
   # 编译任务
   # ============================================
   build:
-    if: github.repository == 'httye/LiveRecorder'
     runs-on: ubuntu-latest
-    name: Build (Java ${{ matrix.java-version }})
+    name: Build (${{ matrix.name }})
 
     strategy:
       matrix:
-        java-version: [ 8, 11, 17 ]
+        include:
+          - name: legacy-spigot-1.16
+            profile: legacy-116
+          - name: paper-26.3
+            profile: paper-263
       fail-fast: false
 
     steps:
@@ -28,41 +31,83 @@ jobs:
         with:
           fetch-depth: 0  # Fetch full history for changelog generation
 
-      - name: ☕ Setup JDK ${{ matrix.java-version }}
+      # Paper 26.3 API classes are Java 25; plugin output stays Java 8.
+      - name: ☕ Setup JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java-version }}
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
-      - name: 🔨 Build with Maven
-        run: mvn clean package -B -V -DskipTests
+      - name: 🔨 Build and test with Maven
+        run: mvn -P${{ matrix.profile }} clean verify -B -V
+
+      - name: ✅ Verify Java 8 plugin bytecode
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+          classes = list(Path("target/classes").rglob("*.class"))
+          if not classes:
+              raise SystemExit("no main class files found")
+          majors = {struct.unpack(">H", p.read_bytes()[6:8])[0] for p in classes}
+          print(f"main class count={len(classes)} major versions={sorted(majors)}")
+          if majors != {52}:
+              raise SystemExit(f"expected Java 8 major 52, got {sorted(majors)}")
+          PY
 
       - name: 📦 Upload build artifact
-        if: matrix.java-version == 17
         uses: actions/upload-artifact@v4
         with:
-          name: LiveRecorder-${{ github.run_number }}
+          name: LiveRecorder-${{ matrix.name }}-${{ github.run_number }}
           path: target/LiveRecorder-*.jar
+          if-no-files-found: error
           retention-days: 30
 
       - name: 📊 Build summary
-        if: matrix.java-version == 17
         run: |
-          echo "## 🔨 Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Java Version**: ${{ matrix.java-version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build Number**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔨 Build Complete (${{ matrix.name }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Compiler JDK**: 25" >> $GITHUB_STEP_SUMMARY
+          echo "- **Plugin bytecode**: Java 8 (major 52)" >> $GITHUB_STEP_SUMMARY
+          echo "- **API profile**: ${{ matrix.profile }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Generated Artifacts:" >> $GITHUB_STEP_SUMMARY
           ls -lh target/*.jar | awk '{print "- "$NF" ("$5")"}' >> $GITHUB_STEP_SUMMARY
+
+  velocity:
+    runs-on: ubuntu-latest
+    name: Velocity build
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      - name: ☕ Setup JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+      - name: 🔨 Build and test Velocity module
+        run: mvn -f velocity/pom.xml clean verify -B -V
+      - name: ✅ Verify Java 17 proxy bytecode
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+          classes = list(Path("velocity/target/classes").rglob("*.class"))
+          if not classes:
+              raise SystemExit("no Velocity class files found")
+          majors = {struct.unpack(">H", p.read_bytes()[6:8])[0] for p in classes}
+          print(f"Velocity class count={len(classes)} major versions={sorted(majors)}")
+          if majors != {61}:
+              raise SystemExit(f"expected Java 17 major 61, got {sorted(majors)}")
+          PY
 
   # ============================================
   # 发布任务 - 仅在推送 tag 时触发
   # ============================================
   release:
-    needs: build
+    needs: [build, velocity]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     name: Create Release
@@ -77,15 +122,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: ☕ Setup JDK 17
+      - name: ☕ Setup JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: '25'
           distribution: 'temurin'
           cache: maven
 
       - name: 🔨 Build with Maven
-        run: mvn clean package -B -V -DskipTests
+        run: mvn -Ppaper-263 clean package -B -V -DskipTests
 
       - name: 📋 Extract version from tag
         id: version

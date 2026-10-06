@@ -14,10 +14,11 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          # Paper 26.3 API is Java 25 bytecode; Maven still emits Java 8.
+          java-version: '25'
           cache: maven
       - name: Test and build backend
-        run: mvn -B clean verify
+        run: mvn -B -Ppaper-263 clean verify
       - name: Test and build coordinator
         run: mvn -B -f velocity/pom.xml clean verify
       - uses: actions/upload-artifact@v4
