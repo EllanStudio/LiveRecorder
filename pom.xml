@@ -13,8 +13,11 @@
     <description>无人机式自由录制者管理系统 - 面向直播/录屏场景的 Minecraft 服务器插件</description>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Paper 26.3 is Java 25 bytecode; keep plugin output at Java 8. -->
+        <api.groupId>io.papermc.paper</api.groupId>
+        <api.artifactId>paper-api</api.artifactId>
+        <api.version>26.3.build.157-beta</api.version>
+        <maven.compiler.release>8</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -40,9 +43,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>26.3.build.157-beta</version>
+            <groupId>${api.groupId}</groupId>
+            <artifactId>${api.artifactId}</artifactId>
+            <version>${api.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -59,6 +62,26 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <!-- Original upstream support floor: Spigot/Paper 1.16.5. -->
+        <profile>
+            <id>legacy-116</id>
+            <properties>
+                <api.groupId>org.spigotmc</api.groupId>
+                <api.artifactId>spigot-api</api.artifactId>
+                <api.version>1.16.5-R0.1-SNAPSHOT</api.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>paper-263</id>
+            <properties>
+                <api.groupId>io.papermc.paper</api.groupId>
+                <api.artifactId>paper-api</api.artifactId>
+                <api.version>26.3.build.157-beta</api.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <finalName>LiveRecorder-${project.version}</finalName>
@@ -86,8 +109,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
         </plugins>
